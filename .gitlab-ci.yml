@@ -1,0 +1,55 @@
+# ╔══════════════════════════════════════════════════════════════╗
+# ║           Pipeline GitLab CI/CD — KanbanApp                 ║
+# ║  Déclenché à chaque push sur main/master                     ║
+# ║  → Build image Spring  → push registry GitLab               ║
+# ║  → Build image Deno    → push registry GitLab               ║
+# ╚══════════════════════════════════════════════════════════════╝
+
+stages:
+  - build
+
+variables:
+  REGISTRY:   "gitlab-depinfo.univ-brest.fr:5050"
+  PROJECT:    "e22406953/kanban"
+  # Désactiver TLS pour Docker-in-Docker
+  DOCKER_TLS_CERTDIR: ""
+
+# ── Job : Build & Push image Spring ────────────────────────────
+build-spring:
+  stage: build
+  image: docker:24
+  services:
+    - docker:24-dind
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$REGISTRY"
+  script:
+    - echo "==> Build image Spring..."
+    - docker build -t "$REGISTRY/$PROJECT/spring:latest"
+                   -t "$REGISTRY/$PROJECT/spring:$CI_COMMIT_SHORT_SHA"
+                   ./spring
+    - echo "==> Push image Spring..."
+    - docker push "$REGISTRY/$PROJECT/spring:latest"
+    - docker push "$REGISTRY/$PROJECT/spring:$CI_COMMIT_SHORT_SHA"
+  only:
+    - main
+    - master
+
+# ── Job : Build & Push image Deno ──────────────────────────────
+build-deno:
+  stage: build
+  image: docker:24
+  services:
+    - docker:24-dind
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$REGISTRY"
+  script:
+    - echo "==> Build image Deno..."
+    - docker build -t "$REGISTRY/$PROJECT/deno:latest"
+                   -t "$REGISTRY/$PROJECT/deno:$CI_COMMIT_SHORT_SHA"
+                   ./deno
+    - echo "==> Push image Deno..."
+    - docker push "$REGISTRY/$PROJECT/deno:latest"
+    - docker push "$REGISTRY/$PROJECT/deno:$CI_COMMIT_SHORT_SHA"
+  only:
+    - main
+    - master

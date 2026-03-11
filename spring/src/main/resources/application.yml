@@ -1,0 +1,29 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    # Les valeurs peuvent être surchargées via variables d'environnement Docker
+    url: ${DB_URL:jdbc:mariadb://obiwan.univ-brest.fr:3306/e22406953_db1?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    username: ${DB_USER:e22406953sql}
+    password: ${DB_PASSWORD:3YyXMiKT}
+    driver-class-name: org.mariadb.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MariaDBDialect
+        format_sql: false
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://obiwan.univ-brest.fr:27017/e22406953_db1}
+
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+
+logging:
+  level:
+    fr.ubo.kanban: INFO
+    org.hibernate.SQL: WARN
