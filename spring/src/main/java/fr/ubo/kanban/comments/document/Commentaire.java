@@ -28,7 +28,7 @@ public class Commentaire {
         private String nom;
         private String type;
         private Long   taille;
-        private String gridfsId;
-        private String url;
+        /** Contenu du fichier encodé en Base64 */
+        private String data;
     }
 }

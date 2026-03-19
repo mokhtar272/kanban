@@ -1,13 +1,6 @@
-# ╔══════════════════════════════════════════════════════════════╗
-# ║          KanbanApp — Stack Docker de production              ║
-# ║  Spring  : port 10010  (interne 8080)                        ║
-# ║  Deno    : port 10011  (interne 8000)                        ║
-# ║  BDD     : obiwan.univ-brest.fr (MariaDB + MongoDB)          ║
-# ╚══════════════════════════════════════════════════════════════╝
 
 services:
 
-  # ── Serveur Spring Boot (API REST + accès BDD) ─────────────
   spring:
     image: gitlab-depinfo.univ-brest.fr:5050/e22406953/kanban/kanban-spring:latest
     container_name: kanban-spring
@@ -15,11 +8,9 @@ services:
     ports:
       - "10010:8080"
     environment:
-      # Base de données MariaDB (obiwan — accessible depuis le réseau UBO)
       DB_URL:      "jdbc:mariadb://obiwan.univ-brest.fr:3306/e22406953_db1?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
       DB_USER:     "e22406953sql"
-      DB_PASSWORD: "3YyXMiKT"
-      # MongoDB (obiwan)
+      DB_PASSWORD: "******"
       MONGO_URI:   "mongodb://obiwan.univ-brest.fr:27017/e22406953_db1"
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api/utilisateurs || exit 1"]
@@ -28,7 +19,6 @@ services:
       retries: 5
       start_period: 60s
 
-  # ── Serveur Deno (Auth JWT + proxy sécurisé vers Spring) ───
   deno:
     image: gitlab-depinfo.univ-brest.fr:5050/e22406953/kanban/kanban-deno:latest
     container_name: kanban-deno
@@ -36,7 +26,6 @@ services:
     ports:
       - "10011:8000"
     environment:
-      # Deno contacte Spring via le nom de service Docker (réseau interne)
       SPRING_URL: "http://spring:8080"
       JWT_SECRET: "kanban-ubo-tiil-2026-secret-key"
     depends_on:

@@ -32,6 +32,8 @@ public class TacheController {
     public ResponseEntity<ApiResponse<TacheDTO>> create(
             @RequestBody Map<String, Object> body,
             @RequestHeader("X-User-Id") Integer userId) {
+        if (userId == null || userId <= 0)
+            return ResponseEntity.badRequest().body(ApiResponse.error("Utilisateur non authentifié"));
         var res = service.create(body, userId);
         if (!res.isSuccess()) return ResponseEntity.badRequest().body(ApiResponse.error(res.getMessage()));
         return ResponseEntity.ok(ApiResponse.ok(res.getMessage(), TacheDTO.from(res.getData())));
@@ -53,12 +55,31 @@ public class TacheController {
         return ApiResponse.ok(null);
     }
 
+    /** Recherche plein texte (titre + description) */
     @GetMapping("/search")
-    public ApiResponse<List<TacheDTO>> search(@RequestParam Integer tableauId, @RequestParam String q) {
+    public ApiResponse<List<TacheDTO>> search(
+            @RequestParam Integer tableauId,
+            @RequestParam(required = false, defaultValue = "") String q) {
+        if (tableauId == null || tableauId <= 0)
+            return ApiResponse.error("Tableau non spécifié");
         return ApiResponse.ok(
             service.search(tableauId, q).stream()
                 .map(TacheDTO::from).collect(Collectors.toList())
         );
+    }
+
+    /** Filtre par priorité et/ou utilisateur assigné */
+    @GetMapping("/filter")
+    public ResponseEntity<ApiResponse<List<TacheDTO>>> filter(
+            @RequestParam Integer tableauId,
+            @RequestParam(required = false) String priorite,
+            @RequestParam(required = false) Integer assigneId) {
+        if (tableauId == null || tableauId <= 0)
+            return ResponseEntity.badRequest().body(ApiResponse.error("Tableau non spécifié"));
+        var results = service.filter(tableauId, priorite, assigneId);
+        return ResponseEntity.ok(ApiResponse.ok(
+            results.stream().map(TacheDTO::from).collect(Collectors.toList())
+        ));
     }
 
     @GetMapping("/historique/{tableauId}")

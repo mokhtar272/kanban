@@ -26,7 +26,9 @@ public class CommentaireController {
     @PostMapping
     public ResponseEntity<ApiResponse<Commentaire>> create(
             @RequestParam Integer tacheId,
-            @RequestBody Map<String, String> body) {
+            @RequestBody Map<String, Object> body) {
+        if (tacheId == null || tacheId <= 0)
+            return ResponseEntity.badRequest().body(ApiResponse.error("Identifiant de tâche invalide"));
         ApiResponse<Commentaire> res = service.create(tacheId, body);
         return res.isSuccess() ? ResponseEntity.ok(res) : ResponseEntity.badRequest().body(res);
     }

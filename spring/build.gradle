@@ -3,10 +3,19 @@ plugins {
     id 'io.spring.dependency-management' version '1.1.4'
     id 'java'
 }
+
 group = 'fr.ubo.kanban'
 version = '1.0.0'
-sourceCompatibility = '17'
-repositories { mavenCentral() }
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+repositories {
+    mavenCentral()
+}
+
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -17,4 +26,22 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     implementation 'org.springframework.security:spring-security-crypto:6.2.2'
+}
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "failed", "skipped"
+        showStandardStreams = false
+        afterSuite { desc, result ->
+            if (!desc.parent) {
+                def status = result.failedTestCount == 0 ? "✅ OK" : "❌ FAILED"
+                println "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                println " ${status} | ${result.testCount} tests"
+                println " ✅ Passés  : ${result.successfulTestCount}"
+                println " ❌ Échoués : ${result.failedTestCount}"
+                println " ⏭  Ignorés : ${result.skippedTestCount}"
+                println "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            }
+        }
+    }
 }

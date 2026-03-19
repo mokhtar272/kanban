@@ -10,7 +10,7 @@
     </div>
 
     <!-- Stats cards -->
-    <div class="grid grid-cols-3 gap-4 mb-8">
+    <div class="grid grid-cols-3 gap-4 mb-6">
       <div class="card p-5">
         <div class="flex items-center justify-between mb-3">
           <span class="text-gray-500 text-sm">Utilisateurs</span>
@@ -33,9 +33,34 @@
           <span class="text-2xl">✅</span>
         </div>
         <p class="text-3xl font-bold text-white">{{ stats.nbTaches ?? '—' }}</p>
-        <p class="text-xs text-purple-400 mt-1">En cours</p>
+        <p class="text-xs text-purple-400 mt-1">Total créées</p>
       </div>
     </div>
+
+    <!-- Activité utilisateurs -->
+    <div v-if="activite.length > 0" class="card p-5 mb-6">
+      <h2 class="font-semibold text-white mb-4">📊 Activité des utilisateurs</h2>
+      <div class="space-y-2">
+        <div v-for="(a, idx) in activite" :key="a.userId"
+          class="flex items-center gap-3">
+          <span class="text-xs text-gray-600 w-4">{{ idx+1 }}</span>
+          <div class="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+            :style="`background: ${avatarColor(a.pseudo)}`">
+            {{ a.pseudo?.[0]?.toUpperCase() }}
+          </div>
+          <span class="text-sm text-gray-300 w-28 truncate">{{ a.pseudo }}</span>
+          <div class="flex-1 bg-gray-800 rounded-full h-2">
+            <div class="h-2 rounded-full transition-all"
+              :style="`width: ${Math.round((a.actions / activite[0].actions) * 100)}%; background: ${avatarColor(a.pseudo)}`">
+            </div>
+          </div>
+          <span class="text-xs text-gray-400 w-16 text-right">{{ a.actions }} action(s)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Erreur globale -->
+    <div v-if="globalError" class="alert-error mb-4">{{ globalError }}</div>
 
     <!-- Utilisateurs -->
     <div class="card overflow-hidden">
@@ -101,33 +126,44 @@ import { ref, computed, onMounted } from 'vue'
 import { adminAPI } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 
-const auth    = useAuthStore()
-const stats   = ref({})
-const users   = ref([])
-const loading = ref(true)
-const search  = ref('')
+const auth        = useAuthStore()
+const stats       = ref({})
+const activite    = ref([])
+const users       = ref([])
+const loading     = ref(true)
+const search      = ref('')
+const globalError = ref('')
 
 const AVATAR_COLORS = ['#3b82f6','#8b5cf6','#ec4899','#10b981','#f59e0b','#6366f1','#14b8a6']
-function avatarColor(s='') { return AVATAR_COLORS[s.charCodeAt(0) % AVATAR_COLORS.length] }
+function avatarColor(s='') { return AVATAR_COLORS[(s?.charCodeAt(0) || 0) % AVATAR_COLORS.length] }
 function formatDate(d) { if (!d) return '—'; return new Date(d).toLocaleDateString('fr-FR') }
 
 const filteredUsers = computed(() => {
   if (!search.value) return users.value
   const q = search.value.toLowerCase()
-  return users.value.filter(u => u.pseudo.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q))
+  return users.value.filter(u =>
+    u.pseudo?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q)
+  )
 })
 
 async function deleteUser(u) {
-  if (!confirm(`Supprimer définitivement "${u.pseudo}" ?`)) return
-  await adminAPI.deleteUser(u.id)
+  if (!confirm(`Supprimer définitivement "${u.pseudo}" ? Cette action est irréversible.`)) return
+  globalError.value = ''
+  const res = await adminAPI.deleteUser(u.id)
+  if (!res.success) { globalError.value = res.message || 'Erreur lors de la suppression'; return }
   users.value = users.value.filter(x => x.id !== u.id)
   if (stats.value.nbUtilisateurs) stats.value.nbUtilisateurs--
 }
 
 onMounted(async () => {
   const [sRes, uRes] = await Promise.all([adminAPI.stats(), adminAPI.utilisateurs()])
-  stats.value   = sRes.data ?? {}
-  users.value   = uRes.data ?? []
+  if (!sRes.success) { globalError.value = sRes.message || 'Impossible de charger les statistiques' }
+  else {
+    stats.value   = sRes.data ?? {}
+    activite.value = (sRes.data?.activiteUtilisateurs ?? [])
+  }
+  if (!uRes.success) { globalError.value = uRes.message || 'Impossible de charger les utilisateurs' }
+  else users.value = uRes.data ?? []
   loading.value = false
 })
 </script>

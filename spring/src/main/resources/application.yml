@@ -6,7 +6,7 @@ spring:
     # Les valeurs peuvent être surchargées via variables d'environnement Docker
     url: ${DB_URL:jdbc:mariadb://obiwan.univ-brest.fr:3306/e22406953_db1?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
     username: ${DB_USER:e22406953sql}
-    password: ${DB_PASSWORD:3YyXMiKT}
+    password: ${DB_PASSWORD:*****}
     driver-class-name: org.mariadb.jdbc.Driver
   jpa:
     hibernate:
